@@ -4,6 +4,7 @@ from enum import Enum
 
 class CoinType(Enum):
     """An enum to encompass types of coins that may be found in a collection."""
+
     STANDARD = "Standard circulation coin"
     COMMEMORATIVE = "Circulating commemorative coin"
     NONCIRCULATING = "Non-circulating coin"
@@ -13,6 +14,7 @@ class CoinType(Enum):
 
 class Grade(Enum):
     """An enum to encompass the ways a coin can be graded."""
+
     GOOD = "G"
     VERY_GOOD = "VG"
     FINE = "F"
@@ -26,6 +28,7 @@ class Grade(Enum):
 @dataclass(frozen=True)
 class Coin:
     """A class to encompass a coin in the collection."""
+    
     country: str
     issuer: str
     face_value: float

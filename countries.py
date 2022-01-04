@@ -269,6 +269,7 @@ COUNTRIES: Dict[str, Region] = {
 
 def map_to_region_name(country: str) -> str:
     """Return a region that a country belongs to."""
+    
     if country in COUNTRIES:
         return COUNTRIES[country].value
     return ""

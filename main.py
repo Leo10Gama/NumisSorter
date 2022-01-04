@@ -66,13 +66,27 @@ def main():
         ]
     }
     my_coins = parser("Collections/YaBoiLennyG_coins.csv", dont_includes)
-    for region, coin_list in my_coins.items():
-        print(f"{len(coin_list)}\tCOINS IN {region}")
-    print()
-    print(f"Coins in Europe:\t{len(my_coins['Western Europe']):3}")
-    print(f"Coins in Latin America:\t{len(my_coins['South America']) + len(my_coins['Central America']) + len(my_coins['Caribbean']) + len(my_coins['Eastern Europe']):3}")
-    print(f"Coins in other world:\t{len(my_coins['Africa']) + len(my_coins['Asia']):3}")
-    print(f"Coins in NA + Oceania:\t{len(my_coins['North America']) + len(my_coins['Oceania']):3}")
+
+    groups: Dict[str, List[str]] = {
+        "Asia / Africa": ["Asia", "Africa"],
+        "North America / Oceania": ["North America", "Oceania"],
+        "Latin America / East Europe": ["Central America", "Caribbean", "South America", "Eastern Europe"],
+        "West Europe": ["Western Europe"]
+    }
+
+    my_collections: Dict[str, List[Coin]] = defaultdict(list)
+    for group_name, group in groups.items():
+        [my_collections[group_name].extend(my_coins[g]) for g in group]
+
+    [print(c.title) for c in my_collections['North America / Oceania']]
+
+    # for region, coin_list in my_coins.items():
+    #     print(f"{len(coin_list)}\tCOINS IN {region}")
+    # print()
+    # print(f"Coins in Europe:\t{len(my_coins['Western Europe']):3}")
+    # print(f"Coins in Latin America:\t{len(my_coins['South America']) + len(my_coins['Central America']) + len(my_coins['Caribbean']) + len(my_coins['Eastern Europe']):3}")
+    # print(f"Coins in other world:\t{len(my_coins['Africa']) + len(my_coins['Asia']):3}")
+    # print(f"Coins in NA + Oceania:\t{len(my_coins['North America']) + len(my_coins['Oceania']):3}")
 
 
 if __name__ == "__main__":

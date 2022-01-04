@@ -8,6 +8,7 @@ from coins import Coin
 @dataclass
 class Slot:
     """A class to represent a slot in a page."""
+
     capacity: int
     max_diameter: float
     coins: List[Coin] = field(default_factory=list)
@@ -19,6 +20,7 @@ class Slot:
 @dataclass
 class Page:
     """A class to represent a page in a book."""
+    
     name: str
     slots: List[Slot]
 
