@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
 
@@ -10,7 +10,10 @@ class Slot:
     """A class to represent a slot in a page."""
     capacity: int
     max_diameter: float
-    coins: List[Coin] = list([None for _ in range(capacity)])
+    coins: List[Coin] = field(default_factory=list)
+    
+    def __post_init__(self):
+        self.coins = list([None for _ in range(self.capacity)])
 
 
 @dataclass

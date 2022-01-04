@@ -84,7 +84,7 @@ COUNTRIES: Dict[str, Region] = {
     "Ecuador": Region.SOUTH_AMERICA,
     "Egypt": Region.AFRICA,
     "El Salvador": Region.CENTRAL_AMERICA,
-    "Equatorial African States": Region.AFRICA,
+    "Equatorial African states": Region.AFRICA,
     "Equatorial Guinea": Region.AFRICA,
     "Eritrea": Region.AFRICA,
     "Estonia": Region.EASTERN_EUROPE,

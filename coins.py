@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -36,9 +36,9 @@ class Coin:
     diameter: float
     thickness: float
     year: int
+    gregorian_year: int
     reference: str = ""
     type: CoinType = CoinType.STANDARD
-    gregorian_year: int = year
     mintmark: str = ""
     grade: Grade = Grade.NO_GRADE
     comment: str = ""
