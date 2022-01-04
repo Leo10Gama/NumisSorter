@@ -1,7 +1,13 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from enum import Enum
+from typing import Dict, List, Optional
 
 from coins import Coin
+
+
+NUMIS_PAGES = [
+    "NUMIS 17", "NUMIS 25", "NUMIS 34", "NUMIS 44", "NUMIS MIX"
+]
 
 
 class SlotFullException(Exception):
@@ -198,3 +204,18 @@ def get_page(name: str) -> Optional[Page]:
     if name == "NUMIS MIX":
         return Page(name, [Slot(5, 34), Slot(12, 25), Slot(16, 17)])
     return None
+
+
+def create_book(coins: List[Coin]) -> List[Page]:
+    """Create a book using a list of coins provided.
+    
+    The book will be created in such a way as to use the fewest number of 
+    pages possible out of the available pages.
+    """
+
+    # Sort by diameter (ascending)
+    coins.sort(key=lambda c : (c.diameter, c.gregorian_year, c.title))
+
+    # Break the list into segments 
+    segments: Dict[int, List[Coin]] = {}
+    

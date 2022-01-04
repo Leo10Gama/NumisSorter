@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from csv import DictReader
 
 from coins import Coin, CoinType, Grade
-from pages import Page
+from pages import Page, create_book
 from countries import map_to_region_name
 
 
@@ -36,17 +36,17 @@ def parser(filename: str, exclusions: Dict[str, list]=None) -> Optional[Dict[str
                 my_coins[map_to_region_name(row['Country'])].append(Coin(
                     country=row['Country'],
                     issuer=row['Issuer'],
-                    face_value=row['Face value'],
-                    numista_id=row['N# number (with link)'].split("N# ", 1)[1],
+                    face_value=float(row['Face value']),
+                    numista_id=int(row['N# number (with link)'].split("N# ", 1)[1]),
                     title=row['Title'],
                     composition=row['Composition'],
-                    weight=row['Weight'],
-                    diameter=row['Diameter'],
-                    thickness=row['Thickness'],
-                    year=row['Year'],
+                    weight=float(row['Weight']),
+                    diameter=float(row['Diameter']),
+                    thickness=float(row['Thickness']) if row['Thickness'] else None,
+                    year=int(row['Year']) if row['Year'] else None,
                     reference=row['Reference'],
                     type=CoinType(row['Type']),
-                    gregorian_year=row['Gregorian year'],
+                    gregorian_year=int(row['Gregorian year']),
                     mintmark=row['Mintmark'],
                     grade=Grade(row['Grade']),
                     comment=row['Public comment']
@@ -57,6 +57,7 @@ def parser(filename: str, exclusions: Dict[str, list]=None) -> Optional[Dict[str
 def main():
     dont_includes = {
         "Grade": ["UNC"], 
+        "Composition": ["Gold (.900)"],
         "Collection": [
             "Uncirculated / Sealed", 
             "Specialized Folder (for circulating coins)", 
@@ -67,26 +68,23 @@ def main():
     }
     my_coins = parser("Collections/YaBoiLennyG_coins.csv", dont_includes)
 
+    # Group coins based on how I want my books
     groups: Dict[str, List[str]] = {
         "Asia / Africa": ["Asia", "Africa"],
         "North America / Oceania": ["North America", "Oceania"],
-        "Latin America / East Europe": ["Central America", "Caribbean", "South America", "Eastern Europe"],
-        "West Europe": ["Western Europe"]
+        "Latin America / Eastern Europe": ["Central America", "Caribbean", "South America", "Eastern Europe"],
+        "Western Europe": ["Western Europe"]
     }
 
+    # Put all the region coins in a list per book (my_collections)
     my_collections: Dict[str, List[Coin]] = defaultdict(list)
     for group_name, group in groups.items():
         [my_collections[group_name].extend(my_coins[g]) for g in group]
 
-    [print(c.title) for c in my_collections['North America / Oceania']]
-
-    # for region, coin_list in my_coins.items():
-    #     print(f"{len(coin_list)}\tCOINS IN {region}")
-    # print()
-    # print(f"Coins in Europe:\t{len(my_coins['Western Europe']):3}")
-    # print(f"Coins in Latin America:\t{len(my_coins['South America']) + len(my_coins['Central America']) + len(my_coins['Caribbean']) + len(my_coins['Eastern Europe']):3}")
-    # print(f"Coins in other world:\t{len(my_coins['Africa']) + len(my_coins['Asia']):3}")
-    # print(f"Coins in NA + Oceania:\t{len(my_coins['North America']) + len(my_coins['Oceania']):3}")
+    # The actual algorithm to put the coins into pages
+    books: Dict[str, List[Page]] = defaultdict(list)
+    for book, coins in my_collections.items():
+        books[book] = create_book(coins)
 
 
 if __name__ == "__main__":
