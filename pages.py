@@ -98,6 +98,12 @@ class Slot:
         raise RuntimeError(f"Coin could not be removed.")
 
 
+    def get_coins(self) -> List[Coin]:
+        """Return all the coins in the Slot."""
+
+        return [c for c in self.coins if c is not None]
+
+
 @dataclass
 class Page:
     """A class to represent a page in a book.
@@ -200,7 +206,7 @@ class Page:
 
         coins = []
         for slot in self.slots:
-            coins.extend(slot.coins)
+            coins.extend(slot.get_coins())
         return coins
 
 
@@ -242,6 +248,7 @@ def create_book(coins: List[Coin]) -> List[Page]:
             segments[44].append(c)
         else:
             segments[0].append(c)
+    [ls.sort(key=lambda c : (c.issuer, c.gregorian_year, c.title)) for ls in segments.values()]
 
     # Start from the largest coins and work our way down
     book: List[Page] = []

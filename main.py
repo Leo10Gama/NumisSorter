@@ -43,7 +43,7 @@ def parser(filename: str, exclusions: Dict[str, list]=None) -> Optional[Dict[str
                     weight=float(row['Weight']),
                     diameter=float(row['Diameter']),
                     thickness=float(row['Thickness']) if row['Thickness'] else None,
-                    year=int(row['Year']) if row['Year'] else None,
+                    year=int(row['Year']) if row['Year'] else -1,
                     reference=row['Reference'],
                     type=CoinType(row['Type']),
                     gregorian_year=int(row['Gregorian year']),
@@ -81,12 +81,58 @@ def main():
     for group_name, group in groups.items():
         [my_collections[group_name].extend(my_coins[g]) for g in group]
 
+    group_nums = {
+        0: "Asia / Africa",
+        1: "North America / Oceania",
+        2: "Latin America / Eastern Europe",
+        3: "Western Europe"
+    }
+
     # The actual algorithm to put the coins into pages
     books: Dict[str, List[Page]] = defaultdict(list)
     for book, coins in my_collections.items():
         print(book)
         books[book] = create_book(coins)
         print(f"Total pages: {len(books[book])}\n{[len(p) for p in books[book]]}\n")
+
+    option = ""
+    while option != "q":
+        print("Select book:\n")
+        for i, book in enumerate(books):
+            print(f"({i}) {book}")
+        print()
+        print(f"(p) Total Pages")
+        print(f"(q) Quit\n")
+        option = input().strip().lower()
+        if option.isnumeric() and int(option) < len(books):
+            option = int(option)
+            cursor = 0
+            while cursor != -1:
+                print()
+                my_page = books[group_nums[option]][cursor]
+                print(f"PAGE: {my_page.name}\n")
+                for coin in my_page.get_coins():
+                    print(f"({coin.year:4}, {coin.issuer})\t{coin.title}")
+                print("\n(n) Next\n(p) Previous\n(q) Quit\n")
+                selection = input().strip().lower()
+                if selection == "n" and cursor + 1 < len(books[group_nums[option]]):
+                    cursor += 1
+                elif selection == "p" and cursor > 0:
+                    cursor -= 1
+                elif selection == "q":
+                    cursor = -1
+        elif option == "q":
+            exit()
+        elif option == "p":
+            my_pages = defaultdict(int)
+            for book in books.values():
+                for page in book:
+                    my_pages[page.name] += 1
+            print("\nTotals for each page:")
+            [print(f"{n}:\t{total:2}") for n, total in my_pages.items()]
+            print()
+        else:
+            print(f"\nInvalid input '{option}'\n")
 
 
 if __name__ == "__main__":
