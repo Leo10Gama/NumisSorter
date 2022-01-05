@@ -84,7 +84,9 @@ def main():
     # The actual algorithm to put the coins into pages
     books: Dict[str, List[Page]] = defaultdict(list)
     for book, coins in my_collections.items():
+        print(book)
         books[book] = create_book(coins)
+        print(f"Total pages: {len(books[book])}\n{[len(p) for p in books[book]]}\n")
 
 
 if __name__ == "__main__":

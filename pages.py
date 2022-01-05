@@ -1,5 +1,5 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List, Optional
 
 from coins import Coin
@@ -40,8 +40,13 @@ class Slot:
     max_diameter: float
     coins: List[Coin] = field(default_factory=list)
     
+
     def __post_init__(self):
         self.coins = list([None for _ in range(self.capacity)])
+
+
+    def __len__(self) -> int:
+        return len([c for c in self.coins if c is not None])
 
     def is_full(self) -> bool:
         """Return whether or not all spaces of the Slot are filled."""
@@ -109,6 +114,14 @@ class Page:
 
     name: str
     slots: List[Slot]
+
+
+    def __len__(self) -> int:
+        return sum([len(slot) for slot in self.slots])
+
+
+    def get_capacity(self) -> int:
+        return sum([slot.capacity for slot in self.slots])
 
 
     def is_full(self) -> bool:
@@ -214,8 +227,124 @@ def create_book(coins: List[Coin]) -> List[Page]:
     """
 
     # Sort by diameter (ascending)
-    coins.sort(key=lambda c : (c.diameter, c.gregorian_year, c.title))
+    coins.sort(key=lambda c : (c.diameter, c.issuer, c.gregorian_year, c.title))
 
     # Break the list into segments 
-    segments: Dict[int, List[Coin]] = {}
-    
+    segments: Dict[int, List[Coin]] = defaultdict(list)
+    for c in coins:
+        if c.diameter <= 17:
+            segments[17].append(c)
+        elif c.diameter <= 25:
+            segments[25].append(c)
+        elif c.diameter <= 34:
+            segments[34].append(c)
+        elif c.diameter <= 44:
+            segments[44].append(c)
+        else:
+            segments[0].append(c)
+
+    # Start from the largest coins and work our way down
+    book: List[Page] = []
+    for size in reversed(segments):
+        new_page = get_page(f"NUMIS {size}")
+        # Error handling (sent a faulty page)
+        if new_page is None:
+            continue
+        # NUMIS 44 is a special case; it doesn't fit in the MIX pack
+        if size == 44:
+            while segments[44]:
+                while segments[44] and not new_page.is_full():
+                    new_page.push_coin(segments[44].pop(0))
+        else:
+            # Put as many large coins in as we can
+            while len(segments[size]) >= new_page.get_capacity():
+                # Put a batch of coins into the page
+                for _ in range(new_page.get_capacity()):
+                    new_page.push_coin(segments[size].pop(0))
+                book.append(new_page)
+                new_page = get_page(f"NUMIS {size}")
+    def num_mix_pages() -> List[str]:
+        """Return the suffix of the remaining page names."""
+
+        # TODO: Probably figure out how to make this method smaller lmao
+        coin_counts = {
+            17: len(segments[17]),
+            25: len(segments[25]),
+            34: len(segments[34])
+        }
+        min_pages_needed = ["34", "25", "17"]
+        pages_needed = []
+        # Test against all MIX
+        temp_nums = dict(coin_counts)
+        while [x for x in temp_nums.values() if x > 0]:
+            pages_needed.append("MIX")
+            temp_nums[17] -= 16
+            temp_nums[25] -= 12
+            temp_nums[34] -= 5
+        min_pages_needed = pages_needed if len(pages_needed) <= len(min_pages_needed) else min_pages_needed
+        # Test against one 34 page + MIXes
+        temp_nums = dict(coin_counts)
+        temp_nums[34] -= 20
+        pages_needed = []
+        pages_needed.append("34")
+        while [x for x in temp_nums.values() if x > 0]:
+            pages_needed.append("MIX")
+            temp_nums[17] -= 16
+            temp_nums[25] -= 12
+            temp_nums[34] -= 5
+        min_pages_needed = pages_needed if len(pages_needed) < len(min_pages_needed) else min_pages_needed
+        # Test against one 25 page + MIXes
+        temp_nums = dict(coin_counts)
+        temp_nums[25] -= 30
+        pages_needed = []
+        pages_needed.append("25")
+        while [x for x in temp_nums.values() if x > 0]:
+            pages_needed.append("MIX")
+            temp_nums[17] -= 16
+            temp_nums[25] -= 12
+            temp_nums[34] -= 5
+        min_pages_needed = pages_needed if len(pages_needed) < len(min_pages_needed) else min_pages_needed
+        # Test against one 17 page + MIXes
+        temp_nums = dict(coin_counts)
+        temp_nums[17] -= 48
+        pages_needed = []
+        pages_needed.append("17")
+        while [x for x in temp_nums.values() if x > 0]:
+            pages_needed.append("MIX")
+            temp_nums[17] -= 16
+            temp_nums[25] -= 12
+            temp_nums[34] -= 5
+        min_pages_needed = pages_needed if len(pages_needed) < len(min_pages_needed) else min_pages_needed
+        return min_pages_needed
+
+    # Figure out whether using MIX pages results in fewer pages
+    excess_pages = num_mix_pages()
+    # Take pages and fill them with necessary coins
+    for size in excess_pages:
+        new_page = get_page(f"NUMIS {size}")
+        if size == "MIX":
+            while [x for x in segments.values() if len(x) > 0]:
+                new_page = get_page(f"NUMIS MIX")
+                for _ in range(4):
+                    if segments[34]:
+                        new_page.push_coin(segments[34].pop(0))
+                    else:
+                        break
+                for _ in range(12):
+                    if segments[25]:
+                        new_page.push_coin(segments[25].pop(0))
+                    else:
+                        break
+                for _ in range(16):
+                    if segments[17]:
+                        new_page.push_coin(segments[17].pop(0))
+                    else:
+                        break
+        else:
+            for c in segments[int(size)]:
+                new_page.push_coin(segments[int(size)].pop(0))
+        
+        if not new_page.is_empty():
+            book.append(new_page)
+
+    return book
